@@ -31,7 +31,7 @@ HEX2BIN_OBJECTS = ${BUILD_OBJ_DIR}/hex2bin.o
 SEXTIUM_OBJECTS = ${BUILD_OBJ_DIR}/sextium.o
 DEASM_OBJECTS = ${BUILD_OBJ_DIR}/deasm.o
 ASM_OBJECTS = ${BUILD_OBJ_DIR}/sextium_asm.tab.o ${BUILD_OBJ_DIR}/sextium_asm.yy.o ${BUILD_OBJ_DIR}/asm_types.o
-DCOMP_OBJECTS = ${BUILD_OBJ_DIR}/dcomp.tab.o ${BUILD_OBJ_DIR}/dcomp.yy.o ${BUILD_OBJ_DIR}/dcomp_types.o
+DCOMP_OBJECTS = ${BUILD_OBJ_DIR}/dcomp.tab.o ${BUILD_OBJ_DIR}/dcomp.yy.o ${BUILD_OBJ_DIR}/dcomp_types.o ${BUILD_OBJ_DIR}/asm_types.o
 
 .SECONDARY:
 

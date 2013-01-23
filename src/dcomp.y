@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "dcomp_types.h"
+#include "asm_types.h"
 #include "trace.h"
 
 int yydebug=0;
@@ -71,10 +71,25 @@ int main(int argc, char* args[])
 {
   char* string;
   int number;
+  COMMAND_LIST command_list;
 }
 
 %token <string> TOKEN_LABEL
 %token <number> TOKEN_NUMBER
+%type <command_list> program
+%type <command_list> instruction
+%type <command_list> simple_instruction
+%type <command_list> nested_program
+%type <command_list> skip_instruction
+%type <command_list> read_instruction
+%type <command_list> write_instruction
+%type <command_list> assign_instruction
+%type <command_list> if_statement
+%type <command_list> if_else_statement
+%type <command_list> while_statement
+%type <command_list> complete_instruction
+%type <command_list> complete_if_else_statement
+%type <command_list> complete_while_statement
 
 %%
 
@@ -108,18 +123,28 @@ read_instruction:
                 TOKEN_READ TOKEN_LABEL TOKEN_SEMICOLON
                 {
                   printf("Read instruction for label <%s>\n", $2);
+                  printf(">> CONST %s\n", $2);
+                  printf(">> SWAPA\n");
+                  printf(">> READ\n");
+                  printf(">> STORE\n");
                 }
 
 write_instruction:
                  TOKEN_WRITE arithmetic_expression TOKEN_SEMICOLON
                  {
                    printf("Write instruction\n");
+                   printf(">> WRITE\n");
                  }
 
 assign_instruction:
                   TOKEN_LABEL TOKEN_ASSIGN arithmetic_expression TOKEN_SEMICOLON
                   {
                     printf("Assign instruction for label <%s>\n", $1);
+                    printf(">> SWAPD\n");
+                    printf(">> CONST %s\n", $1);
+                    printf(">> SWAPA\n");
+                    printf(">> SWAPD\n");
+                    printf(">> STORE\n");
                   }
 
 if_statement:
@@ -167,27 +192,68 @@ factor_label:
             TOKEN_LABEL
             {
               printf("Factor with label <%s> loaded\n", $1);
+              printf(">> CONST %s\n", $1);
+              printf(">> SWAPA\n");
+              printf(">> LOAD\n");
             }
 
 factor_number:
              TOKEN_NUMBER
              {
                printf("Factor with value <%d> loaded\n", $1);
+               printf(">> CONST %d\n", $1);
              }
 
 negative_factor:
                TOKEN_MINUS TOKEN_NUMBER
                {
                  printf("Negative factor loaded\n");
+                 printf(">> CONST -%d\n", $2);
                }
 
 component:
          factor |
-         component multiplicative_operator factor
+         mul_operation |
+         div_operation |
+         mod_operation
+/*         component multiplicative_operator factor */
+
+mul_operation:
+             component TOKEN_ASTERISK factor
+             {
+               printf("Mul operation loaded\n");
+             }
+
+div_operation:
+             component TOKEN_SLASH factor
+             {
+               printf("Div operation loaded\n");
+             }
+
+mod_operation:
+             component TOKEN_PERCENT factor
+             {
+               printf("Mod operation loaded\n");
+             }
+
 
 arithmetic_expression:
-                       component |
-                       arithmetic_expression additive_operator component
+                     component |
+                     add_operation |
+                     sub_operation
+/*                     arithmetic_expression additive_operator component */
+
+add_operation:
+             arithmetic_expression TOKEN_PLUS component
+             {
+               printf("Add operation loaded\n");
+             }
+
+sub_operation:
+             arithmetic_expression TOKEN_MINUS component
+             {
+               printf("Sub operation loaded\n");
+             }
 
 relational_expression:
                      arithmetic_expression relational_operator arithmetic_expression |
@@ -203,13 +269,13 @@ logical_component:
 conditional_expression:
                       logical_component |
                       conditional_expression TOKEN_OR logical_component
-
+/*
 multiplicative_operator:
                        TOKEN_ASTERISK | TOKEN_SLASH | TOKEN_PERCENT
 
 additive_operator:
                  TOKEN_PLUS | TOKEN_MINUS
-
+*/
 relational_operator:
                    TOKEN_EQUALS | TOKEN_NOT_EQUALS | TOKEN_LESS_THAN_EQUALS | TOKEN_GREATER_THAN_EQUALS |
                    TOKEN_LESS_THAN | TOKEN_GREATER_THAN
