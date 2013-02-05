@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "asm_types.h"
+#include "dcomp_types.h"
 #include "trace.h"
 
 int yydebug=0;
@@ -71,31 +72,67 @@ int main(int argc, char* args[])
 {
   char* string;
   int number;
-  COMMAND_LIST command_list;
+  INSTRUCTION instruction;
+  INSTRUCTION_LIST instruction_list;
 }
 
 %token <string> TOKEN_LABEL
 %token <number> TOKEN_NUMBER
-%type <command_list> program
-%type <command_list> instruction
-%type <command_list> simple_instruction
-%type <command_list> nested_program
-%type <command_list> skip_instruction
-%type <command_list> read_instruction
-%type <command_list> write_instruction
-%type <command_list> assign_instruction
-%type <command_list> if_statement
-%type <command_list> if_else_statement
-%type <command_list> while_statement
-%type <command_list> complete_instruction
-%type <command_list> complete_if_else_statement
-%type <command_list> complete_while_statement
+%type <instruction_list> program
+
+%type <instruction_list> single_instruction
+%type <instruction_list> multiple_instructions
+
+%type <instruction> instruction
+%type <instruction> simple_instruction
+%type <instruction_list> instruction_list
+%type <instruction_list> complete_instruction_list
+%type <instruction_list> single_instruction_list
+%type <instruction_list> single_complete_instruction_list
+%type <instruction_list> nested_program
+%type <instruction> skip_instruction
+%type <instruction> read_instruction
+%type <instruction> write_instruction
+%type <instruction> assign_instruction
+%type <instruction> if_statement
+%type <instruction> if_else_statement
+%type <instruction> while_statement
+%type <instruction> complete_instruction
+%type <instruction> complete_if_else_statement
+%type <instruction> complete_while_statement
 
 %%
 
 program:
+       single_instruction |
+       multiple_instructions
+
+/*
        instruction |
        program instruction
+*/
+
+
+single_instruction:
+                  instruction
+                  {
+                    INSTRUCTION_LIST list;
+                    list = createInstructionList();
+                    if (list == null)
+                    {
+                      exit(1);
+                    }
+                    addInstruction(list, $1);
+                    $$ = list;
+                  }
+
+multiple_instructions:
+                     program instruction
+                     {
+                       INSTRUCTION_LIST list = $1;
+                       addInstruction(list, $2);
+                       $$ = list;
+                     }
 
 instruction:
            simple_instruction |
@@ -107,11 +144,13 @@ simple_instruction:
                   skip_instruction |
                   read_instruction |
                   write_instruction |
-                  assign_instruction |
-                  nested_program
+                  assign_instruction 
 
 nested_program:
               TOKEN_LEFTP program TOKEN_RIGHTP
+              {
+                $$ = $2;
+              }
 
 skip_instruction:
                 TOKEN_SKIP TOKEN_SEMICOLON
@@ -148,19 +187,19 @@ assign_instruction:
                   }
 
 if_statement:
-            TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP instruction
+            TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP instruction_list
             {
               printf("If instruction\n");
             }
 
 if_else_statement:
-                 TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction TOKEN_ELSE instruction
+                 TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction_list TOKEN_ELSE instruction_list
                  {
                    printf("If-else instruction\n");
                  }
 
 while_statement:
-               TOKEN_WHILE TOKEN_LEFTP conditional_expression TOKEN_RIGHTP instruction
+               TOKEN_WHILE TOKEN_LEFTP conditional_expression TOKEN_RIGHTP instruction_list
                {
                  printf("While instruction\n");
                }
@@ -171,16 +210,50 @@ complete_instruction:
                     complete_while_statement
 
 complete_if_else_statement:
-                          TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction TOKEN_ELSE complete_instruction
+                          TOKEN_IF TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction_list TOKEN_ELSE complete_instruction_list
                           {
                             printf("Complete if-else instruction\n");
                           }
 
 complete_while_statement:
-                        TOKEN_WHILE TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction
+                        TOKEN_WHILE TOKEN_LEFTP conditional_expression TOKEN_RIGHTP complete_instruction_list
                         {
                           printf("Complete while instruction\n");
                         }
+
+instruction_list:
+                single_instruction_list |
+                nested_program
+
+single_instruction_list:
+                       instruction
+                       {
+                         INSTRUCTION_LIST list;
+                         list = createInstructionList();
+                         if (list == null)
+                         {
+                           exit(1);
+                         }
+                         addInstruction(list, $1);
+                         $$ = list;
+                       }
+
+complete_instruction_list:
+                         single_complete_instruction_list |
+                         nested_program
+
+single_complete_instruction_list:
+                                complete_instruction
+                                {
+                                  INSTRUCTION_LIST list;
+                                  list = createInstructionList();
+                                  if (list == null)
+                                  {
+                                    exit(1);
+                                  }
+                                  addInstruction(list, $1);
+                                  $$ = list;
+                                }                                  
 
 factor:
       factor_label |

@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include "asm_types.h"
+#include "dcomp_types.h"
 #include "dcomp.tab.h"
 %}
 
