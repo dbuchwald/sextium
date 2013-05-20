@@ -156,6 +156,11 @@ skip_instruction:
                 TOKEN_SKIP TOKEN_SEMICOLON
                 {
                   printf("Skip instruction\n");
+                  INSTRUCTION instruction = createSkipInstruction();
+                  if (instruction == null)
+                  {
+                    exit(1);
+                  }
                 }
 
 read_instruction:
@@ -166,6 +171,17 @@ read_instruction:
                   printf(">> SWAPA\n");
                   printf(">> READ\n");
                   printf(">> STORE\n");
+                  VARIABLE label = createVariable($2);
+                  if (label == null)
+                  {
+                    exit(1);
+                  }
+                  INSTRUCTION instruction = createReadInstruction(label);
+                  if (instruction == null)
+                  {
+                    exit(1);
+                  }
+                  $$ = instruction;
                 }
 
 write_instruction:
@@ -173,6 +189,12 @@ write_instruction:
                  {
                    printf("Write instruction\n");
                    printf(">> WRITE\n");
+                   INSTRUCTION instruction = createWriteInstruction($2);
+                   if (instruction == null)
+                   {
+                     exit(1);
+                   }
+                   $$ = instruction;
                  }
 
 assign_instruction:
@@ -184,6 +206,17 @@ assign_instruction:
                     printf(">> SWAPA\n");
                     printf(">> SWAPD\n");
                     printf(">> STORE\n");
+                    VARIABLE label = createVariable($1);
+                    if (label == null)
+                    {
+                      exit(1);
+                    }
+                    INSTRUCTION instruction = createAssignInstruction(label, $3);
+                    if (instruction == null)
+                    {
+                      exit(1);
+                    }
+                    $$ = instruction;
                   }
 
 if_statement:
