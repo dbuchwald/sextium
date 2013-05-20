@@ -74,6 +74,7 @@ int main(int argc, char* args[])
   int number;
   INSTRUCTION instruction;
   INSTRUCTION_LIST instruction_list;
+  ARITHMETIC_EXPRESSION_TYPE arithmetic_expression_type;
 }
 
 %token <string> TOKEN_LABEL
@@ -100,6 +101,19 @@ int main(int argc, char* args[])
 %type <instruction> complete_instruction
 %type <instruction> complete_if_else_statement
 %type <instruction> complete_while_statement
+
+%type <arithmetic_expression_type> arithmetic_expression 
+%type <arithmetic_expression_type> component
+%type <arithmetic_expression_type> add_operation
+%type <arithmetic_expression_type> sub_operation
+%type <arithmetic_expression_type> mul_operation
+%type <arithmetic_expression_type> div_operation
+%type <arithmetic_expression_type> mod_operation
+%type <arithmetic_expression_type> factor
+%type <arithmetic_expression_type> factor_label
+%type <arithmetic_expression_type> factor_number
+%type <arithmetic_expression_type> negative_factor
+%type <arithmetic_expression_type> nested_arithmetic_expression
 
 %%
 
@@ -171,7 +185,7 @@ read_instruction:
                   printf(">> SWAPA\n");
                   printf(">> READ\n");
                   printf(">> STORE\n");
-                  VARIABLE label = createVariable($2);
+                  VARIABLE_TYPE label = createVariable($2);
                   if (label == null)
                   {
                     exit(1);
@@ -206,7 +220,7 @@ assign_instruction:
                     printf(">> SWAPA\n");
                     printf(">> SWAPD\n");
                     printf(">> STORE\n");
-                    VARIABLE label = createVariable($1);
+                    VARIABLE_TYPE label = createVariable($1);
                     if (label == null)
                     {
                       exit(1);
@@ -292,7 +306,13 @@ factor:
       factor_label |
       factor_number |
       negative_factor |
-      TOKEN_LEFTP arithmetic_expression TOKEN_RIGHTP
+      nested_arithmetic_expression
+
+nested_arithmetic_expression:
+                            TOKEN_LEFTP arithmetic_expression TOKEN_RIGHTP
+                            {
+                              $$ = $2;
+                            }
 
 factor_label:
             TOKEN_LABEL
